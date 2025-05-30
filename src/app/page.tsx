@@ -3,14 +3,10 @@ import Link from "next/link"
 import { useEffect, useState } from 'react';
 import axios from "axios";
 import  {Room} from "@/interface"
-import { io } from 'socket.io-client';
 import { API_ENDPOINTS } from "../endpoint/api";
 import socket from "@/util/socket";
-// const socket = io('https://socket-server-production-cd36.up.railway.app'); 
 export default function IndexPage() {
-    // const [queue, setQueue] = useState([]);
 
-  // const [user, setUser] = useState<UserQ | null>(null);
 
    const [rooms, setRooms] = useState<Room[]>([]);
   const fetchRooms = async () => {
