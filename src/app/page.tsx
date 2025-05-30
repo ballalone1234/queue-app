@@ -1,103 +1,94 @@
-import Image from "next/image";
+"use client";
+import Link from "next/link"
+import { useEffect, useState } from 'react';
+import axios from "axios";
+import  {Room} from "@/interface"
+import { io } from 'socket.io-client';
+import { API_ENDPOINTS } from "../endpoint/api";
+import socket from "@/util/socket";
+// const socket = io('https://socket-server-production-cd36.up.railway.app'); 
+export default function IndexPage() {
+    // const [queue, setQueue] = useState([]);
 
-export default function Home() {
+  // const [user, setUser] = useState<UserQ | null>(null);
+
+   const [rooms, setRooms] = useState<Room[]>([]);
+  const fetchRooms = async () => {
+      try {
+        const response = await axios.get(API_ENDPOINTS.rooms); // Adjust the endpoint as needed
+        if (response.status !== 200) {
+          throw new Error('Failed to fetch rooms');
+        }
+        const data = response.data as Room[];
+        console.log("Fetched rooms:", data);
+        setRooms(data);
+      } catch (error) {
+        console.error('Error fetching rooms:', error);
+      }
+    };
+  useEffect(() => {
+    fetchRooms();
+      socket.on('roomUpdated', (newSeats :any) => {
+            console.log("Received room update:", newSeats);
+            setRooms(newSeats);
+        });
+        return () => {
+            socket.off('roomUpdated');
+        };
+  }
+  , []);
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="min-h-screen bg-gray-100 p-8">
+      <div className="max-w-md mx-auto">
+        <h1 className="text-2xl font-bold text-gray-800 mb-8">Index</h1>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+        <div className="bg-white border-2 border-gray-300 rounded-lg p-6">
+          <div className="border-2 border-gray-300 rounded p-4 mb-6">
+            <h2 className="text-lg font-semibold text-gray-700 text-center">Please Select Room</h2>
+          </div>
+
+          { rooms.length > 0 && (
+            <div className="space-y-4 mb-6">
+              {rooms.map((room) => (
+                <Link key={room._id} href={`/room/${room._id}?room_name=${room.name}`} className="block" >
+                  <div className="border-2 border-gray-300 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                    <div className="bg-white p-4 text-center">
+                      <h3 className="font-semibold text-gray-800">ROOM</h3>
+                      <h3 className="font-semibold text-gray-800">{room.name}</h3>
+                    </div>
+                    <div className={`p-2 text-center ${room.member_count >= room.max_member ? 'bg-red-500' : 'bg-green-200'}`}>
+                      <span className="text-sm text-white">{room.member_count >= room.max_member ? `Lock (${room.member_count}/${room.max_member})` : `Available (${room.member_count}/${room.max_member})`}</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+          {/* <div className="grid grid-cols-2 gap-4">
+            <Link href="/room/a" className="block">
+              <div className="border-2 border-gray-300 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                <div className="bg-white p-4 text-center">
+                  <h3 className="font-semibold text-gray-800">ROOM</h3>
+                  <h3 className="font-semibold text-gray-800">A</h3>
+                </div>
+                <div className="bg-green-200 p-2 text-center">
+                  <span className="text-sm text-gray-700">Available (0/5)</span>
+                </div>
+              </div>
+            </Link>
+
+            <div className="border-2 border-gray-300 rounded-lg overflow-hidden opacity-75 cursor-not-allowed">
+              <div className="bg-white p-4 text-center">
+                <h3 className="font-semibold text-gray-800">ROOM</h3>
+                <h3 className="font-semibold text-gray-800">B</h3>
+              </div>
+              <div className="bg-red-500 p-2 text-center">
+                <span className="text-sm text-white">Lock (5/5)</span>
+              </div>
+            </div>
+          </div> */}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
     </div>
-  );
+  )
 }
